@@ -1,0 +1,7 @@
+anthropic
+pydantic>=2
+langfuse
+python-dotenv
+streamlit
+python-docx
+pytest

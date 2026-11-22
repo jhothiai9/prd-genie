@@ -1,0 +1,9 @@
+[project]
+name = "prdgenie"
+version = "0.1.0"
+description = "Grounded PRD, epics and user stories from meeting transcripts and notes."
+requires-python = ">=3.12"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

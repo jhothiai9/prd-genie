@@ -1,0 +1,19 @@
+{
+  "name": "PRD Genie",
+  "version": "0.1",
+  "pattern": "sequential_pipeline_with_parallel_tail",
+  "observability": "langfuse",
+  "stages": [
+    {"id": "A0", "name": "intake_normalizer", "kind": "llm", "model": "claude-haiku-5-5", "prompt": "prompts/a0_intake.md", "input": "raw_text", "output_schema": "IntakeResult"},
+    {"id": "GATE", "name": "enough_content_gate", "kind": "code", "rule": "stop with missing_info when A0.enough_content is false"},
+    {"id": "A1", "name": "requirement_extractor", "kind": "llm", "model": "claude-haiku-5-5", "prompt": "prompts/a1_extractor.md", "input": "A0.lines", "output_schema": "Extraction"},
+    {"id": "VER", "name": "grounding_verifier", "kind": "code", "rule": "drop and log any item whose quote is not a substring of the source lines"},
+    {"id": "HITL1", "name": "pm_review_requirements", "kind": "human", "actions": ["approve", "edit", "send_back_with_note"], "send_back_to": "A1"},
+    {"id": "A2", "name": "prd_generator", "kind": "llm", "model": "claude-sonnet-5-5", "prompt": "prompts/a2_prd.md", "input": ["data/prd_template.md", "HITL1.approved_extraction"], "output_schema": "markdown"},
+    {"id": "A3", "name": "story_breakdown", "kind": "llm", "model": "claude-sonnet-5-5", "prompt": "prompts/a3_stories.md", "input": ["A2.prd", "HITL1.approved_extraction"], "output_schema": "StoryBreakdown"},
+    {"id": "A4", "name": "gap_analyzer", "kind": "llm", "model": "claude-haiku-5-5", "prompt": "prompts/a4_gap.md", "input": ["HITL1.approved_extraction", "A2.prd", "A3.stories"], "output_schema": "GapReport", "parallel_group": "tail"},
+    {"id": "A5", "name": "scope_estimator", "kind": "llm", "model": "claude-haiku-5-5", "prompt": "prompts/a5_scope.md", "input": ["A3.stories", "HITL1.approved_extraction"], "output_schema": "ScopeReport", "parallel_group": "tail"},
+    {"id": "HITL2", "name": "pm_signoff", "kind": "human", "actions": ["approve", "reject_with_note"]},
+    {"id": "EXPORT", "name": "export", "kind": "code", "formats": ["markdown", "docx", "json"]}
+  ]
+}
